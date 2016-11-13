@@ -1,0 +1,12 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "4.13",
+	"Category": "",
+	"Description": "",
+	"Plugins": [
+		{
+			"Name": "UnrealCS",
+			"Enabled": true
+		}
+	]
+}
