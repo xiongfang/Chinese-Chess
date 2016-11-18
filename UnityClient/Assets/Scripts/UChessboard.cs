@@ -68,7 +68,12 @@ public class UChessboard : MonoBehaviour
     public ChessData[] StartChessboard;
 
     //玩家视图类型
-    ECampType ViewType;
+    UGamer RedGamer;    //红方
+    UGamer BlackGamer;  //黑方
+    float game_start_timer;    //游戏开始计时
+
+    //当前正在下棋的阵营
+    ECampType NowPlayer;
 
     void Awake()
     {
@@ -111,11 +116,11 @@ public class UChessboard : MonoBehaviour
     {
         if (ct == ECampType.Red)
         {
-            return new Point(10 - pt.x, pt.y + 1);
+            return new Point(9 - pt.x, pt.y + 1);
         }
         else
         {
-            return new Point(10 - pt.x, pt.y + 1).Invert();
+            return new Point(9 - pt.x, pt.y + 1).Invert();
         }
     }
 
@@ -130,10 +135,16 @@ public class UChessboard : MonoBehaviour
         return red_start_point + new Vector3(pt.x * size, 0, pt.y * size);
     }
 
+    public Point WorldToPos(Vector3 world)
+    {
+        Vector3 localPos = world - red_start_point;
+        return new Point((int)((localPos.x+size/2)/size),(int)((localPos.z + size / 2 )/ size));
+    }
 
     //创建棋盘
     public void Init()
     {
+        //初始化棋盘
         map = new Chess[9, 10];
 
         for(int i=0;i<StartChessboard.Length;i++)
@@ -141,23 +152,32 @@ public class UChessboard : MonoBehaviour
             AddChess(new Chess_Ju(StartChessboard[i]));
         }
 
-        ViewType = ECampType.Red;
+        //创建玩家和AI
 
-        //设置为红方视角
-        SetPlayerView(ViewType);
+        RedGamer = new UPlayer();
+        RedGamer.name = "小明";
+        RedGamer.Camp = ECampType.Red;
+        RedGamer.Controller = new ULocalPlayerController();
+
+        BlackGamer = new UBot();
+        BlackGamer.name = "魔王";
+        BlackGamer.Camp = ECampType.Black;
+        BlackGamer.Controller = new UAIController();
+
+        //默认为红方视角
+        SetPlayerView(ECampType.Red);
+
+        //红方起手
+        SetNowGamer(ECampType.Red);
     }
 
     void Update()
     {
-        //H键切换视图
-        if(Input.GetKeyDown(KeyCode.H))
-        {
-            if (ViewType == ECampType.Red)
-                ViewType = ECampType.Black;
-            else
-                ViewType = ECampType.Red;
-            SetPlayerView(ViewType);
-        }
+        //根据当前的下棋方，更新控制器
+        if(NowPlayer == ECampType.Red)
+            RedGamer.Controller.Update();
+        else
+            BlackGamer.Controller.Update();
     }
 
     /// <summary>
@@ -203,16 +223,23 @@ public class UChessboard : MonoBehaviour
         c.onRemoved();
     }
 
+    //防止棋盘坐标越界
+    Point ClampChessboardPoint(Point pt)
+    {
+        return new Point(Mathf.Clamp(pt.x, 0, 8), Mathf.Clamp(pt.y, 0, 9));
+    }
+
     //将棋子移动到新坐标
     public void MoveChess(Chess chess,Point newChessboardPos)
     {
+        newChessboardPos = ClampChessboardPoint(newChessboardPos);
         //记录老坐标
         Point lastChessPoint = chess.point;
         //计算新坐标
         Point newChessPoint = ToChessPoint(newChessboardPos, chess.campType);
 
         //吃掉新坐标的棋子
-        if(this[newChessboardPos]!=null)
+        if(this[newChessboardPos]!=null && this[newChessboardPos] != chess)
         {
             RemoveChess(this[newChessboardPos]);
         }
@@ -229,6 +256,36 @@ public class UChessboard : MonoBehaviour
     {
         CameraRed.SetActive(ct == ECampType.Red);
         CameraBlack.SetActive(ct == ECampType.Black);
+    }
+
+    //返回当前的观察相机
+    public Camera GetViewCamera()
+    {
+        if (CameraRed.activeSelf)
+            return CameraRed.GetComponent<Camera>();
+        else
+            return CameraBlack.GetComponent<Camera>();
+    }
+
+    public void SetNowGamer(ECampType NowCamp)
+    {
+        NowPlayer = NowCamp;
+        if (NowPlayer == ECampType.Red)
+        {
+            BlackGamer.Controller.TunEnd();
+            RedGamer.Controller.TunStart();
+        }
+        else
+        {
+            RedGamer.Controller.TunEnd();
+            BlackGamer.Controller.TunStart();
+        }
+    }
+
+    void OnGUI()
+    {
+        RedGamer.Controller.DebugDraw();
+        BlackGamer.Controller.DebugDraw();
     }
 }
 
@@ -261,7 +318,7 @@ public abstract class Chess
     //预制体对象索引
     protected GameObject prefab;
     //实例化对象
-    protected GameObject gameObject;
+    public GameObject gameObject;
 
     public Chess(ChessData data)
     {
@@ -317,7 +374,7 @@ public abstract class Chess
 
     public void onMoved(Point lastPos, Point newPos)
     {
-
+        gameObject.transform.position = GetWorldPosstion();
     }
 }
 
