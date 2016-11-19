@@ -45,6 +45,30 @@ public struct Point
     {
         return new Point(a.x - b.x, a.y - b.y);
     }
+
+    public override bool Equals(object obj)
+    {
+        Point B = (Point)obj;
+        return x == B.x && y == B.y;
+    }
+
+    //保证相等的Point返回相同的HashCode
+    public override int GetHashCode()
+    {
+        return x.GetHashCode() ^ y.GetHashCode();
+    }
+
+    public static bool operator==(Point A,Point B)
+    {
+        return A.Equals(B);
+    }
+
+    public static bool operator !=(Point A, Point B)
+    {
+        return !(A == B);
+    }
+
+    
 }
 
 
@@ -58,11 +82,15 @@ public class UChessboard : MonoBehaviour
     public float size = 0.2f;
     public Vector3 red_start_point = new Vector3(-0.77f, 0, -0.87f);
 
+    //红方相机
     public GameObject CameraRed;
+    //黑方相机
     public GameObject CameraBlack;
+    //可走位置标记
+    public GameObject MarkPrefab;
 
     //当前棋盘的棋子
-    public Chess[,] map;
+    public UChess[,] map;
 
     //初始棋谱
     public ChessData[] StartChessboard;
@@ -75,9 +103,20 @@ public class UChessboard : MonoBehaviour
     //当前正在下棋的阵营
     ECampType NowPlayer;
 
+    //棋子对象工厂
+    Dictionary<EChessType, Type> ChessTypeFactory;
+
     void Awake()
     {
         Instance = this;
+        ChessTypeFactory = new Dictionary<EChessType, Type>();
+        ChessTypeFactory[EChessType.Ju] = typeof(UChess_Ju);
+        ChessTypeFactory[EChessType.Ma] = typeof(UChess_Ma);
+        ChessTypeFactory[EChessType.Xiang] = typeof(UChess_Xiang);
+        ChessTypeFactory[EChessType.Shi] = typeof(UChess_Shi);
+        ChessTypeFactory[EChessType.Shuai] = typeof(UChess_Shuai);
+        ChessTypeFactory[EChessType.Pao] = typeof(UChess_Pao);
+        ChessTypeFactory[EChessType.Bing] = typeof(UChess_Bing);
     }
 
     void OnDestroy()
@@ -145,11 +184,13 @@ public class UChessboard : MonoBehaviour
     public void Init()
     {
         //初始化棋盘
-        map = new Chess[9, 10];
+        map = new UChess[9, 10];
 
         for(int i=0;i<StartChessboard.Length;i++)
         {
-            AddChess(new Chess_Ju(StartChessboard[i]));
+            UChess chess = System.Activator.CreateInstance(ChessTypeFactory[StartChessboard[i].chessType]) as UChess;
+            chess.InitData(StartChessboard[i]);
+            AddChess(chess);
         }
 
         //创建玩家和AI
@@ -180,33 +221,40 @@ public class UChessboard : MonoBehaviour
             BlackGamer.Controller.Update();
     }
 
+    public bool IsValidChessboardPoint(Point pt)
+    {
+        return pt.x >= 0 && pt.x <= 8 && pt.y >= 0 && pt.y <= 9;
+    }
+
     /// <summary>
     /// 重载索引器
     /// </summary>
     /// <param name="pt">棋盘坐标</param>
     /// <returns>指定坐标的棋子</returns>
-    public Chess this[Point pt]
+    public UChess this[Point pt]
     {
         get
         {
-            if(pt.x>=0 && pt.x<=8 && pt.y>=0 && pt.y<=9)
+            if(IsValidChessboardPoint(pt))
             {
                 return map[pt.x, pt.y];
             }
             else
             {
-                Debug.LogErrorFormat("error Point {0},{1}", pt.x, pt.y);
                 return null;
             }
         }
         set
         {
-            map[pt.x, pt.y] = value;
+            if (IsValidChessboardPoint(pt))
+                map[pt.x, pt.y] = value;
+            else
+                Debug.LogErrorFormat("error chessboard point x:{0},y:{1}", pt.x, pt.y);
         }
     }
 
     //添加一个棋子到棋盘上（如果指定坐标已经有棋子了，吃掉棋子）
-    public void AddChess(Chess c)
+    public void AddChess(UChess c)
     {
         if(this[c.ToChessboardPoint()] !=null)
         {
@@ -217,7 +265,7 @@ public class UChessboard : MonoBehaviour
     }
 
     //从棋盘移除一个棋子
-    public void RemoveChess(Chess c)
+    public void RemoveChess(UChess c)
     {
         this[c.ToChessboardPoint()] = null;
         c.onRemoved();
@@ -230,7 +278,7 @@ public class UChessboard : MonoBehaviour
     }
 
     //将棋子移动到新坐标
-    public void MoveChess(Chess chess,Point newChessboardPos)
+    public void MoveChess(UChess chess,Point newChessboardPos)
     {
         newChessboardPos = ClampChessboardPoint(newChessboardPos);
         //记录老坐标
@@ -243,6 +291,9 @@ public class UChessboard : MonoBehaviour
         {
             RemoveChess(this[newChessboardPos]);
         }
+
+        //将棋子从原始位置移除
+        this[chess.ToChessboardPoint()] = null;
 
         //设置新坐标
         chess.point = newChessPoint;
@@ -289,105 +340,3 @@ public class UChessboard : MonoBehaviour
     }
 }
 
-[Serializable]
-public struct ChessData
-{
-    //棋子名称
-    public string name;
-    //棋子所属阵营(红或蓝)
-    public ECampType campType;
-    //棋子坐标（以本方阵营为准，从右到左X轴1到9，从下到上Y轴1到10）
-    public Point point;
-
-    //预制体对象索引
-    public GameObject prefab;
-}
-
-/// <summary>
-/// 棋子基类
-/// </summary>
-public abstract class Chess
-{
-    //棋子名称
-    public string name;
-    //棋子所属阵营(红或蓝)
-    public ECampType campType;
-    //棋子坐标（以本方阵营为准，从右到左X轴1到9，从下到上Y轴1到10）
-    public Point point;
-
-    //预制体对象索引
-    protected GameObject prefab;
-    //实例化对象
-    public GameObject gameObject;
-
-    public Chess(ChessData data)
-    {
-        this.name = data.name;
-        this.campType = data.campType;
-        this.point = data.point;
-        this.prefab = data.prefab;
-    }
-
-    /// <summary>
-    /// 返回可以走动的位置
-    /// </summary>
-    /// <returns></returns>
-    public abstract List<Point> GetAvailablePoints();
-
-    /// <summary>
-    /// 返回棋盘坐标 （以红方为准，从左到右 0-8，从下到上0-9）
-    /// </summary>
-    /// <returns></returns>
-    public Point ToChessboardPoint()
-    {
-        return UChessboard.Instance.ToChessboardPoint(point, campType);
-    }
-
-    /// <summary>
-    /// 返回棋子的三维世界坐标
-    /// </summary>
-    /// <returns></returns>
-    public Vector3 GetWorldPosstion()
-    {
-        return UChessboard.Instance.PosToWorld(ToChessboardPoint());
-    }
-
-
-
-    public void onAdded()
-    {
-        //创建棋子
-        gameObject = GameObject.Instantiate<GameObject>(prefab);
-        //坐标
-        gameObject.transform.position = GetWorldPosstion();
-        if(campType == ECampType.Red)
-        {
-            Vector3 Eurler = gameObject.transform.localEulerAngles;
-            Eurler.y = 180;
-            gameObject.transform.localEulerAngles = Eurler;
-        }
-    }
-    public void onRemoved()
-    {
-        GameObject.Destroy(gameObject);
-    }
-
-    public void onMoved(Point lastPos, Point newPos)
-    {
-        gameObject.transform.position = GetWorldPosstion();
-    }
-}
-
-public class Chess_Ju : Chess
-{
-
-    public Chess_Ju(ChessData data) :base(data)
-    {
-            
-    }
-
-    public override List<Point> GetAvailablePoints()
-    {
-        return null;
-    }
-}

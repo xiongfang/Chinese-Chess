@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 /// <summary>
 /// 本地玩家控制器
@@ -16,7 +17,7 @@ public class ULocalPlayerController : UPlayerController {
     //操作阶段
     EOpStep MyOperateStep;
     //选择的棋子
-    Chess selectedChess;
+    UChess selectedChess;
 
     ECampType ViewType;
 
@@ -43,11 +44,12 @@ public class ULocalPlayerController : UPlayerController {
                         RaycastHit HitInfo;
                         if (Physics.Raycast(UChessboard.Instance.GetViewCamera().ScreenPointToRay(Input.mousePosition), out HitInfo))
                         {
-                            Chess HitChess = UChessboard.Instance[UChessboard.Instance.WorldToPos(HitInfo.point)];
+                            UChess HitChess = UChessboard.Instance[UChessboard.Instance.WorldToPos(HitInfo.point)];
                             if (HitChess != null && HitChess.campType == MyCamp)
                             {
                                 selectedChess = HitChess;
                                 MyOperateStep = EOpStep.Push;
+                                ShowMoveTargets();
                             }
                         }
                     }
@@ -64,7 +66,16 @@ public class ULocalPlayerController : UPlayerController {
                         if (Input.GetMouseButtonDown(0))
                         {
                             Point NewPoint = UChessboard.Instance.WorldToPos(HitInfo.point);
-                            UChessboard.Instance.MoveChess(selectedChess, NewPoint);
+                            if(selectedChess.GetAvailablePoints().Contains(UChessboard.Instance.ToChessPoint(NewPoint,selectedChess.campType)))
+                            {
+                                UChessboard.Instance.MoveChess(selectedChess, NewPoint);
+                            }
+                            else
+                            {
+                                selectedChess.ResetPosition();
+                            }
+
+                            ClearMoveTargets();
 
                             MyOperateStep = EOpStep.Select;
                         }
@@ -85,6 +96,27 @@ public class ULocalPlayerController : UPlayerController {
     public override void TunEnd()
     {
         MyOperateStep = EOpStep.None;
+    }
+
+    List<GameObject> Marks = new List<GameObject>();
+    void ShowMoveTargets()
+    {
+        List<Point> Targets = selectedChess.GetAvailablePoints();
+        for(int i=0;i<Targets.Count;i++)
+        {
+            Marks.Add( GameObject.Instantiate(UChessboard.Instance.MarkPrefab, 
+                UChessboard.Instance.PosToWorld(UChessboard.Instance.ToChessboardPoint(Targets[i],selectedChess.campType)), 
+                UChessboard.Instance.MarkPrefab.transform.rotation) as GameObject);
+        }
+    }
+
+    void ClearMoveTargets()
+    {
+        for(int i=0;i<Marks.Count;i++)
+        {
+            GameObject.Destroy(Marks[i]);
+        }
+        Marks.Clear();
     }
 
     public override void DebugDraw()
