@@ -15,4 +15,10 @@ public class UController  {
     //轮开始通知
     public virtual void TunStart() { }
     public virtual void TunEnd() { }
+
+    public virtual  void OnAttach(UGamer Gamer)
+    {
+        MyCamp = Gamer.Camp;
+    }
+    public virtual void OnDetach(UGamer Gamer) { }
 }

@@ -49,6 +49,8 @@ public abstract class UChess
     //实例化对象
     public GameObject gameObject;
 
+    public EChessType chessType;
+
     /// <summary>
     /// 方便访问
     /// </summary>
@@ -66,6 +68,7 @@ public abstract class UChess
         this.campType = data.campType;
         this.point = data.point;
         this.prefab = data.prefab;
+        this.chessType = data.chessType;
     }
 
     /// <summary>

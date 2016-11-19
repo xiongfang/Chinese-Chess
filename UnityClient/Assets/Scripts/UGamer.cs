@@ -13,5 +13,23 @@ public class UGamer {
     public ECampType Camp;
 
     //控制器
-    public UController Controller;
+    private UController _controller;
+
+    public UController Controller
+    {
+        get { return _controller; }
+    }
+
+    public void Attach(UController controller)
+    {
+        if(Controller!=null)
+        {
+            Controller.OnDetach(this);
+        }
+        _controller = controller;
+        if(Controller!=null)
+        {
+            Controller.OnAttach(this);
+        }
+    }
 }

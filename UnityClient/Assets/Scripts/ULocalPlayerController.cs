@@ -68,7 +68,11 @@ public class ULocalPlayerController : UPlayerController {
                             Point NewPoint = UChessboard.Instance.WorldToPos(HitInfo.point);
                             if(selectedChess.GetAvailablePoints().Contains(UChessboard.Instance.ToChessPoint(NewPoint,selectedChess.campType)))
                             {
-                                UChessboard.Instance.MoveChess(selectedChess, NewPoint);
+                                Command Cmd = new Command();
+                                Cmd.Camp = MyCamp;
+                                Cmd.From = selectedChess.ToChessboardPoint();
+                                Cmd.To = NewPoint;
+                                UChessboard.Instance.DoCommand(Cmd);
                             }
                             else
                             {
