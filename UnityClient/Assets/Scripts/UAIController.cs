@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// AI控制器
+/// AI控制器（随机走法）
 /// </summary>
 public class UAIController : UController {
 
@@ -59,5 +59,24 @@ public class UAIController : UController {
                 return;
             }
         }
+    }
+}
+
+
+/// <summary>
+/// AI控制器 神经网络算法
+/// </summary>
+public class UBotAIController : UController
+{
+    UNeuronNet Net;
+
+    public UBotAIController()
+    {
+        Net = new UNeuronNet();
+    }
+
+    public override void Update()
+    {
+
     }
 }
