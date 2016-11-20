@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c83423118caf7bd41a4162ae4ba07a7a
+TrueTypeFontImporter:
+  serializedVersion: 2
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 1
+  characterPadding: 0
+  includeFontData: 1
+  use2xBehaviour: 0
+  fontNames:
+  - HYCuHeiJ
+  - SimHei
+  - Droid Sans Fallback
+  - LTHYSZK
+  customCharacters: 
+  fontRenderingMode: 0
+  userData: 

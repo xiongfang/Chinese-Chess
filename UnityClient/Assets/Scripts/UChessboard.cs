@@ -108,19 +108,21 @@ public class UChessboard : MonoBehaviour
     //玩家视图类型
     UGamer RedGamer;    //红方
     UGamer BlackGamer;  //黑方
-    float game_start_timer;    //游戏开始计时
+    public float game_start_timer;    //游戏开始计时
 
     //当前正在下棋的阵营
-    ECampType NowPlayer;
+    public ECampType NowPlayer;
 
     //棋子对象工厂
     Dictionary<EChessType, Type> ChessTypeFactory;
 
     List<Command> History;
 
-    bool game_over;
-    ECampType Winner;
+    public bool game_over;
+    public ECampType Winner;
 
+    public delegate void EventGameOver(ECampType winner);
+    public EventGameOver onGameOver;
 
     void Awake()
     {
@@ -200,6 +202,8 @@ public class UChessboard : MonoBehaviour
     //创建棋盘
     public void Init()
     {
+        game_start_timer = 0.0f;
+
         //初始化棋盘
         map = new UChess[9, 10];
 
@@ -216,6 +220,7 @@ public class UChessboard : MonoBehaviour
         RedGamer.name = "小明";
         RedGamer.Camp = ECampType.Red;
         RedGamer.Attach(new ULocalPlayerController());
+        UPlayer.LocalPlayer = RedGamer as UPlayer;
 
         BlackGamer = new UBot();
         BlackGamer.name = "魔王";
@@ -234,25 +239,20 @@ public class UChessboard : MonoBehaviour
         //根据当前的下棋方，更新控制器
         if(!game_over)
         {
+            game_start_timer += Time.deltaTime;
+
             if (NowPlayer == ECampType.Red)
                 RedGamer.Controller.Update();
             else
                 BlackGamer.Controller.Update();
-
-            //悔一步，倒退两步
-            if(Input.GetKeyDown(KeyCode.R))
-            {
-                Undo();
-                Undo();
-            }
         }
         else
         {
-            //任意按键重新开始
-            if(Input.anyKeyDown)
-            {
-                Restart();
-            }
+            ////任意按键重新开始
+            //if(Input.anyKeyDown)
+            //{
+            //    Restart();
+            //}
         }
     }
 
@@ -312,32 +312,6 @@ public class UChessboard : MonoBehaviour
         return new Point(Mathf.Clamp(pt.x, 0, 8), Mathf.Clamp(pt.y, 0, 9));
     }
 
-    ////将棋子移动到新坐标
-    //public void MoveChess(UChess chess,Point newChessboardPos)
-    //{
-    //    newChessboardPos = ClampChessboardPoint(newChessboardPos);
-    //    //记录老坐标
-    //    Point lastChessPoint = chess.point;
-    //    //计算新坐标
-    //    Point newChessPoint = ToChessPoint(newChessboardPos, chess.campType);
-
-    //    //吃掉新坐标的棋子
-    //    if(this[newChessboardPos]!=null && this[newChessboardPos] != chess)
-    //    {
-    //        RemoveChess(this[newChessboardPos]);
-    //    }
-
-    //    //将棋子从原始位置移除
-    //    this[chess.ToChessboardPoint()] = null;
-
-    //    //设置新坐标
-    //    chess.point = newChessPoint;
-    //    //移动位置
-    //    this[chess.ToChessboardPoint()] = chess;
-    //    //事件通知
-    //    chess.onMoved(lastChessPoint, newChessPoint);
-    //}
-
     public void DoCommand(Command Cmd)
     {
         UChess chess = this[Cmd.From];
@@ -359,6 +333,10 @@ public class UChessboard : MonoBehaviour
                 if(Judge(Cmd.EatedHistory))
                 {
                     game_over = true;
+                    if (onGameOver != null)
+                    {
+                        onGameOver(Winner);
+                    }
                 }
             }
         }
@@ -438,7 +416,7 @@ public class UChessboard : MonoBehaviour
     }
 
     //重新开始
-    void Restart()
+    public  void Restart()
     {
         game_over = false;
         History.Clear();
@@ -506,7 +484,7 @@ public class UChessboard : MonoBehaviour
     {
         RedGamer.Controller.DebugDraw();
         BlackGamer.Controller.DebugDraw();
-        GUILayout.Label("NowTun " + NowPlayer);
+        //GUILayout.Label("NowTun " + NowPlayer);
     }
 }
 

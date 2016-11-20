@@ -125,6 +125,6 @@ public class ULocalPlayerController : UPlayerController {
 
     public override void DebugDraw()
     {
-        GUILayout.Label(string.Format("MyOperateStep {0}", MyOperateStep));
+        //GUILayout.Label(string.Format("MyOperateStep {0}", MyOperateStep));
     }
 }
