@@ -40,6 +40,36 @@ public abstract class UNeuronNet {
             AllLayers.Add(new UNeuronLayer(Config.NumOutputs, Config.NumInputs));
         }
     }
+
+    //从神经网络读取权重
+    public List<double> GetWeights()
+    {
+        List<double> Weights = new List<double>();
+        for (int i = 0; i < AllLayers.Count; i++)
+        {
+            for (int j = 0; j < AllLayers[i].Neurons.Length; j++)
+            {
+                Weights.AddRange(AllLayers[i].Neurons[j].InputWeights);
+            }
+        }
+        return Weights;
+    }
+
+    //替换神经网络的权重
+    public void PutWeights(List<double> Weights)
+    {
+        int index = 0;
+        int count = Config.NumInputsPerNeuron;
+
+        for (int i = 0; i < AllLayers.Count; i++)
+        {
+            for (int j = 0; j < AllLayers[i].Neurons.Length; j++)
+            {
+                AllLayers[i].Neurons[j].InputWeights = Weights.GetRange(index, count).ToArray();
+                index += count;
+            }
+        }
+    }
 }
 
 

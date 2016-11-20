@@ -10,4 +10,8 @@ public class UGenome  {
     //适应性
     public double Fidness;
 
+    public UGenome(int NumWeights)
+    {
+        Weights = new double[NumWeights];
+    }
 }
