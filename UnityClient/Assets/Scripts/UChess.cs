@@ -459,21 +459,51 @@ public class UChess_Xiang:UChess
     {
         return IsValidPoint(pt) && pt.y <= 5;
     }
+
     public override List<Point> GetAvailablePoints()
     {
-        Point pt1 = new Point(point.x - 2, point.y-2);
-        Point pt2 = new Point(point.x + 2, point.y-2);
-        Point pt3 = new Point(point.x-2, point.y + 2);
-        Point pt4 = new Point(point.x+2, point.y +2);
         List<Point> R = new List<Point>();
+
+
+        Point pt1 = new Point(point.x - 1, point.y -1);
+        Point pt2 = new Point(point.x + 1, point.y -1 );
+        Point pt3 = new Point(point.x -1 , point.y + 1);
+        Point pt4 = new Point(point.x +1, point.y + 1);
+        UChess chess1 = null;
+        UChess chess2 = null;
+        UChess chess3 = null;
+        UChess chess4 = null;
+
         if (ValidPoint(pt1))
-            R.Add(pt1);
-        if (ValidPoint(pt2))
-            R.Add(pt2);
-        if (ValidPoint(pt3))
-            R.Add(pt3);
-        if (ValidPoint(pt4))
-            R.Add(pt4);
+        {
+            chess1 = chessboard[chessboard.ToChessboardPoint(pt1, campType)];
+        }
+        if (IsValidPoint(pt2))
+        {
+            chess2 = chessboard[chessboard.ToChessboardPoint(pt2, campType)];
+        }
+        if (IsValidPoint(pt3))
+        {
+            chess3 = chessboard[chessboard.ToChessboardPoint(pt3, campType)];
+        }
+        if (IsValidPoint(pt4))
+        {
+            chess4 = chessboard[chessboard.ToChessboardPoint(pt4, campType)];
+        }
+
+        Point ptTarget1 = new Point(point.x - 2, point.y - 2);
+        Point ptTarget2 = new Point(point.x + 2, point.y - 2);
+        Point ptTarget3 = new Point(point.x - 2, point.y + 2);
+        Point ptTarget4 = new Point(point.x + 2, point.y + 2);
+
+        if (chess1 == null && ValidPoint(ptTarget1))
+            R.Add(ptTarget1);
+        if (chess2 == null && ValidPoint(ptTarget2))
+            R.Add(ptTarget2);
+        if (chess3 == null && ValidPoint(ptTarget3))
+            R.Add(ptTarget3);
+        if (chess4 == null && ValidPoint(ptTarget4))
+            R.Add(ptTarget4);
         return ModifyChessPoint(R);
     }
 }

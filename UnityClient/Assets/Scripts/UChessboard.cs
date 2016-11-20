@@ -226,6 +226,8 @@ public class UChessboard : MonoBehaviour
         BlackGamer.name = "魔王";
         BlackGamer.Camp = ECampType.Black;
         BlackGamer.Attach(new UAIController());
+        //BlackGamer.Attach(new UBotAIController());
+
 
         //默认为红方视角
         SetPlayerView(ECampType.Red);

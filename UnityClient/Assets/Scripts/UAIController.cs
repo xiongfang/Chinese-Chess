@@ -68,15 +68,36 @@ public class UAIController : UController {
 /// </summary>
 public class UBotAIController : UController
 {
-    UNeuronNet Net;
+    UNeuronNet_Controller Net;
 
     public UBotAIController()
     {
-        Net = new UNeuronNet();
+        Net = new UNeuronNet_Controller();
+    }
+
+    List<UChess> GetMyChessList()
+    {
+        List<UChess> R = new List<UChess>();
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                Point pt = new Point(i, j);
+                if (UChessboard.Instance[pt] != null && UChessboard.Instance[pt].campType == MyCamp)
+                {
+                    R.Add(UChessboard.Instance[pt]);
+                }
+            }
+        }
+        return R;
     }
 
     public override void Update()
     {
-
+        Command Cmd = Net.Update(GetMyChessList().ToArray(),MyCamp);
+        if(Cmd != null)
+        {
+            UChessboard.Instance.DoCommand(Cmd);
+        }
     }
 }
