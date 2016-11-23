@@ -6,6 +6,9 @@ using System.Collections;
 /// </summary>
 public class UGamer {
 
+    //对弈的棋盘
+    public UChessboard Chessboard;
+
     //名称
     public string name;
 

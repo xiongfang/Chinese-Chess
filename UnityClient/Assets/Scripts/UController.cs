@@ -7,6 +7,7 @@ using System.Collections;
 public class UController  {
     //我的阵营
     public ECampType MyCamp;
+    public UGamer Gamer;
 
     public virtual void Update() { }
 
@@ -19,6 +20,7 @@ public class UController  {
     public virtual  void OnAttach(UGamer Gamer)
     {
         MyCamp = Gamer.Camp;
+        this.Gamer = Gamer;
     }
     public virtual void OnDetach(UGamer Gamer) { }
 }

@@ -87,7 +87,17 @@ public class Command
 /// </summary>
 public class UChessboard : MonoBehaviour
 {
-    public static UChessboard Instance;
+    //public static UChessboard Instance;
+
+    public bool learn = false;
+    //神经网络学习模式的情况下，不显示棋子
+    public bool show
+    {
+        get
+        {
+            return gameObject.activeSelf;
+        }
+    }
 
     public float size = 0.2f;
     public Vector3 red_start_point = new Vector3(-0.77f, 0, -0.87f);
@@ -106,8 +116,8 @@ public class UChessboard : MonoBehaviour
     public ChessData[] StartChessboard;
 
     //玩家视图类型
-    UGamer RedGamer;    //红方
-    UGamer BlackGamer;  //黑方
+    public UGamer RedGamer;    //红方
+    public UGamer BlackGamer;  //黑方
     public float game_start_timer;    //游戏开始计时
 
     //当前正在下棋的阵营
@@ -124,29 +134,20 @@ public class UChessboard : MonoBehaviour
     public delegate void EventGameOver(ECampType winner);
     public EventGameOver onGameOver;
 
-    void Awake()
-    {
-        Instance = this;
-        History = new List<Command>();
-        ChessTypeFactory = new Dictionary<EChessType, Type>();
-        ChessTypeFactory[EChessType.Ju] = typeof(UChess_Ju);
-        ChessTypeFactory[EChessType.Ma] = typeof(UChess_Ma);
-        ChessTypeFactory[EChessType.Xiang] = typeof(UChess_Xiang);
-        ChessTypeFactory[EChessType.Shi] = typeof(UChess_Shi);
-        ChessTypeFactory[EChessType.Shuai] = typeof(UChess_Shuai);
-        ChessTypeFactory[EChessType.Pao] = typeof(UChess_Pao);
-        ChessTypeFactory[EChessType.Bing] = typeof(UChess_Bing);
-    }
-
-    void OnDestroy()
-    {
-        Instance = null;
-    }
 
     void Start()
     {
-        Init();
+        if(!learn)
+            InitStart();
     }
+
+    void Update()
+    {
+        if (!learn)
+            Step();
+    }
+
+
     /// <summary>
     /// 将棋子坐标转为棋盘坐标（以红方为准，从左到右 0-8，从下到上0-9）
     /// </summary>
@@ -199,8 +200,61 @@ public class UChessboard : MonoBehaviour
         return new Point((int)((localPos.x+size/2)/size),(int)((localPos.z + size / 2 )/ size));
     }
 
+
+    public void InitStart()
+    {
+        History = new List<Command>();
+        ChessTypeFactory = new Dictionary<EChessType, Type>();
+        ChessTypeFactory[EChessType.Ju] = typeof(UChess_Ju);
+        ChessTypeFactory[EChessType.Ma] = typeof(UChess_Ma);
+        ChessTypeFactory[EChessType.Xiang] = typeof(UChess_Xiang);
+        ChessTypeFactory[EChessType.Shi] = typeof(UChess_Shi);
+        ChessTypeFactory[EChessType.Shuai] = typeof(UChess_Shuai);
+        ChessTypeFactory[EChessType.Pao] = typeof(UChess_Pao);
+        ChessTypeFactory[EChessType.Bing] = typeof(UChess_Bing);
+
+
+        //创建玩家和AI
+        if (!learn)
+        {
+            RedGamer = new UPlayer();
+            RedGamer.Chessboard = this;
+            RedGamer.name = "小明";
+            RedGamer.Camp = ECampType.Red;
+            RedGamer.Attach(new ULocalPlayerController());
+            UPlayer.LocalPlayer = RedGamer as UPlayer;
+
+            BlackGamer = new UBot();
+            BlackGamer.Chessboard = this;
+            BlackGamer.name = "魔王";
+            BlackGamer.Camp = ECampType.Black;
+            UBotAIController BotAI = new UBotAIController();
+            BlackGamer.Attach(BotAI);
+
+            //设置AI
+            BotAI.Net.PutWeights(new List<double>(UGameEngine.LoadWeightsFromFile_ForUse()[0]));
+        }
+        else
+        {
+            RedGamer = new UBot();
+            RedGamer.Chessboard = this;
+            RedGamer.name = "小明";
+            RedGamer.Camp = ECampType.Red;
+            RedGamer.Attach(new UBotAIController());
+            UPlayer.LocalPlayer = RedGamer as UPlayer;
+
+            BlackGamer = new UBot();
+            BlackGamer.Chessboard = this;
+            BlackGamer.name = "魔王";
+            BlackGamer.Camp = ECampType.Black;
+            BlackGamer.Attach(new UBotAIController());
+        }
+
+        Init();
+    }
+
     //创建棋盘
-    public void Init()
+    void Init()
     {
         game_start_timer = 0.0f;
 
@@ -210,23 +264,9 @@ public class UChessboard : MonoBehaviour
         for(int i=0;i<StartChessboard.Length;i++)
         {
             UChess chess = System.Activator.CreateInstance(ChessTypeFactory[StartChessboard[i].chessType]) as UChess;
-            chess.InitData(StartChessboard[i]);
+            chess.InitData(StartChessboard[i],this);
             AddChess(chess);
         }
-
-        //创建玩家和AI
-
-        RedGamer = new UPlayer();
-        RedGamer.name = "小明";
-        RedGamer.Camp = ECampType.Red;
-        RedGamer.Attach(new ULocalPlayerController());
-        UPlayer.LocalPlayer = RedGamer as UPlayer;
-
-        BlackGamer = new UBot();
-        BlackGamer.name = "魔王";
-        BlackGamer.Camp = ECampType.Black;
-        BlackGamer.Attach(new UAIController());
-        //BlackGamer.Attach(new UBotAIController());
 
 
         //默认为红方视角
@@ -236,12 +276,14 @@ public class UChessboard : MonoBehaviour
         SetNowTun(ECampType.Red);
     }
 
-    void Update()
+
+    //一步棋
+    public void Step()
     {
         //根据当前的下棋方，更新控制器
-        if(!game_over)
+        if (!game_over)
         {
-            game_start_timer += Time.deltaTime;
+            game_start_timer += RealTime.deltaTime;
 
             if (NowPlayer == ECampType.Red)
                 RedGamer.Controller.Update();

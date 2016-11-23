@@ -11,7 +11,7 @@ public abstract class UNeuronNet {
 
     public class ConfigData
     {
-        public int NumInputsPerNeuron = 10;
+        //public int NumInputsPerNeuron = 10;
         public int NumNeuronPerHiddenLayer = 10;
         public int NumHiddenLayer = 1;
         public int NumInputs = 10;
@@ -59,16 +59,28 @@ public abstract class UNeuronNet {
     public void PutWeights(List<double> Weights)
     {
         int index = 0;
-        int count = Config.NumInputsPerNeuron;
-
         for (int i = 0; i < AllLayers.Count; i++)
         {
             for (int j = 0; j < AllLayers[i].Neurons.Length; j++)
             {
-                AllLayers[i].Neurons[j].InputWeights = Weights.GetRange(index, count).ToArray();
-                index += count;
+                AllLayers[i].Neurons[j].InputWeights = Weights.GetRange(index, AllLayers[i].Neurons[j].InputWeights.Length).ToArray();
+                index += AllLayers[i].Neurons[j].InputWeights.Length;
             }
         }
+    }
+
+    //统计权重数量
+    public int GetWeightCount()
+    {
+        int count = 0;
+        for (int i = 0; i < AllLayers.Count; i++)
+        {
+            for (int j = 0; j < AllLayers[i].Neurons.Length; j++)
+            {
+                count += AllLayers[i].Neurons[j].InputWeights.Length;
+            }
+        }
+        return count;
     }
 }
 
@@ -79,13 +91,13 @@ public abstract class UNeuronNet {
 public class UNeuronNet_Test : UNeuronNet
 {
 
-    public static double Bias = 1.0;
+    public static double Bias = -1.0;
     public static double ActivationResponse = 1.0f;
 
 
     double Sigmod(double activation, double response)
     {
-        return 0;
+        return 1.0 / (1.0 + System.Math.Exp(-activation / response));
     }
 
     public double[] Update(double[] inputs)
@@ -106,12 +118,12 @@ public class UNeuronNet_Test : UNeuronNet
                 double NetInputs = 0;
                 int WeightIndex = 0;
                 //算权重和输入的和
-                for (int k = 0; k < AllLayers[i].Neurons[i].InputWeights.Length - 1; k++)
+                for (int k = 0; k < AllLayers[i].Neurons[j].InputWeights.Length - 1; k++)
                 {
-                    NetInputs += AllLayers[i].Neurons[i].InputWeights[k] * inputs[WeightIndex++];
+                    NetInputs += AllLayers[i].Neurons[j].InputWeights[k] * inputs[WeightIndex++];
                 }
                 //加入偏移
-                NetInputs += AllLayers[i].Neurons[i].InputWeights[AllLayers[i].Neurons[i].InputWeights.Length - 1] * Bias;
+                NetInputs += AllLayers[i].Neurons[j].InputWeights[AllLayers[i].Neurons[j].InputWeights.Length - 1] * Bias;
 
                 //输出
                 outputs.Add(Sigmod(NetInputs, ActivationResponse));
@@ -135,10 +147,55 @@ public class UNeuronNet_Chess:UNeuronNet
 /// <summary>
 /// 控制器AI，输入棋盘的所有棋子，返回可走的指令
 /// </summary>
-public class UNeuronNet_Controller:UNeuronNet
+public class UNeuronNet_Controller: UNeuronNet_Test
 {
+    double[] GetInputs(UChess[] inputs, ECampType NowCamp)
+    {
+        double[] outputs = new double[Config.NumInputs];
+
+        int output_index = 0;
+        for(int i=0;i<inputs.Length;i++)
+        {
+            outputs[output_index++] = inputs[i].point.x;
+            outputs[output_index++] = inputs[i].point.y;
+            outputs[output_index++] = (double)inputs[i].campType;
+        }
+
+        return outputs;
+    }
+
+    List<Command> GetCommandList(UChess[] inputs, ECampType NowCamp)
+    {
+        List<Command> R = new List<Command>();
+        for(int i=0;i< inputs.Length;i++)
+        {
+            if(inputs[i].campType == NowCamp)
+            {
+                List<Point> Targets =  inputs[i].GetAvailablePoints();
+                for(int j=0;j<Targets.Count;j++)
+                {
+                    Command Cmd = new Command();
+                    Cmd.Camp = NowCamp;
+                    Cmd.From = inputs[i].ToChessboardPoint();
+                    Cmd.To = inputs[i].chessboard.ToChessboardPoint( Targets[j],NowCamp);
+                    R.Add(Cmd);
+                }
+            }
+        }
+        return R;
+    }
+
     public Command Update(UChess[] inputs,ECampType NowCamp)
     {
-        return null;
+        List<Command> CmdList = GetCommandList(inputs, NowCamp);
+        if(CmdList.Count == 0)
+        {
+            return null;
+        }
+
+        double[] outputs = Update(GetInputs(inputs, NowCamp));
+        int index = Mathf.FloorToInt((float)(outputs[0] * CmdList.Count));
+        index = Mathf.Clamp(index, 0, CmdList.Count - 1);
+        return CmdList[index];
     }
 }

@@ -14,7 +14,8 @@ public enum EChessType
     Xiang,
     Shi,
     Shuai,
-    Bing
+    Bing,
+    Count
 }
 
 [Serializable]
@@ -46,29 +47,38 @@ public abstract class UChess
 
     //预制体对象索引
     protected GameObject prefab;
+
     //实例化对象
     public GameObject gameObject;
 
     public EChessType chessType;
 
+    UChessboard _chessboard;
     /// <summary>
     /// 方便访问
     /// </summary>
-    protected UChessboard chessboard
+    public UChessboard chessboard
     {
         get
         {
-            return UChessboard.Instance;
+            return _chessboard;
         }
     }
 
-    public virtual void InitData(ChessData data)
+    //是否显示棋子
+    bool show
+    {
+        get { return chessboard.show; }
+    }
+
+    public virtual void InitData(ChessData data, UChessboard board)
     {
         this.name = data.name;
         this.campType = data.campType;
         this.point = data.point;
         this.prefab = data.prefab;
         this.chessType = data.chessType;
+        _chessboard = board;
     }
 
     /// <summary>
@@ -133,30 +143,42 @@ public abstract class UChess
     //还原显示位置
     public void ResetPosition()
     {
-        gameObject.transform.position = GetWorldPosstion();
+        if(show)
+        {
+            gameObject.transform.position = GetWorldPosstion();
+        }
     }
 
     public void onAdded()
     {
-        //创建棋子
-        gameObject = GameObject.Instantiate<GameObject>(prefab);
-        //坐标
-        gameObject.transform.position = GetWorldPosstion();
-        if (campType == ECampType.Red)
+        if (show)
         {
-            Vector3 Eurler = gameObject.transform.localEulerAngles;
-            Eurler.y = 180;
-            gameObject.transform.localEulerAngles = Eurler;
+            //创建棋子
+            gameObject = GameObject.Instantiate<GameObject>(prefab);
+            //坐标
+            gameObject.transform.position = GetWorldPosstion();
+            if (campType == ECampType.Red)
+            {
+                Vector3 Eurler = gameObject.transform.localEulerAngles;
+                Eurler.y = 180;
+                gameObject.transform.localEulerAngles = Eurler;
+            }
         }
     }
     public void onRemoved()
     {
-        GameObject.Destroy(gameObject);
+        if (show)
+        {
+            GameObject.Destroy(gameObject);
+        }
     }
 
     public void onMoved(Point lastPos, Point newPos)
     {
-        gameObject.transform.position = GetWorldPosstion();
+        if (show)
+        {
+            gameObject.transform.position = GetWorldPosstion();
+        }
     }
 
     protected bool IsValidPoint(Point pt)
@@ -593,6 +615,29 @@ public class UChess_Shuai:UChess
             R.Add(pt3);
         if (ValidPoint(pt4))
             R.Add(pt4);
+
+        //查看是否可以喝酒
+        Point PT = point;
+        //X轴负向
+        while (PT.y < 10)
+        {
+            PT.y++;
+            Point cbPoint = chessboard.ToChessboardPoint(PT, campType);
+            UChess chess = chessboard[cbPoint];
+            if (chess != null)
+            {
+                if (chess.chessType == EChessType.Shuai)
+                {
+                    R.Add(PT);
+                    break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
         return ModifyChessPoint(R);
     }
 }

@@ -30,7 +30,7 @@ public class ULocalPlayerController : UPlayerController {
                 ViewType = ECampType.Black;
             else
                 ViewType = ECampType.Red;
-            UChessboard.Instance.SetPlayerView(ViewType);
+            Gamer.Chessboard.SetPlayerView(ViewType);
         }
 
         switch (MyOperateStep)
@@ -42,9 +42,9 @@ public class ULocalPlayerController : UPlayerController {
                     if (Input.GetMouseButtonDown(0))
                     {
                         RaycastHit HitInfo;
-                        if (Physics.Raycast(UChessboard.Instance.GetViewCamera().ScreenPointToRay(Input.mousePosition), out HitInfo))
+                        if (Physics.Raycast(Gamer.Chessboard.GetViewCamera().ScreenPointToRay(Input.mousePosition), out HitInfo))
                         {
-                            UChess HitChess = UChessboard.Instance[UChessboard.Instance.WorldToPos(HitInfo.point)];
+                            UChess HitChess = Gamer.Chessboard[Gamer.Chessboard.WorldToPos(HitInfo.point)];
                             if (HitChess != null && HitChess.campType == MyCamp)
                             {
                                 selectedChess = HitChess;
@@ -58,21 +58,22 @@ public class ULocalPlayerController : UPlayerController {
             case EOpStep.Push:
                 {
                     RaycastHit HitInfo;
-                    if (Physics.Raycast(UChessboard.Instance.GetViewCamera().ScreenPointToRay(Input.mousePosition), out HitInfo))
+                    if (Physics.Raycast(Gamer.Chessboard.GetViewCamera().ScreenPointToRay(Input.mousePosition), out HitInfo))
                     {
-                        selectedChess.gameObject.transform.position = HitInfo.point;
+                        if(selectedChess.gameObject!=null)
+                            selectedChess.gameObject.transform.position = HitInfo.point;
 
 
                         if (Input.GetMouseButtonDown(0))
                         {
-                            Point NewPoint = UChessboard.Instance.WorldToPos(HitInfo.point);
-                            if(selectedChess.GetAvailablePoints().Contains(UChessboard.Instance.ToChessPoint(NewPoint,selectedChess.campType)))
+                            Point NewPoint = Gamer.Chessboard.WorldToPos(HitInfo.point);
+                            if(selectedChess.GetAvailablePoints().Contains(Gamer.Chessboard.ToChessPoint(NewPoint,selectedChess.campType)))
                             {
                                 Command Cmd = new Command();
                                 Cmd.Camp = MyCamp;
                                 Cmd.From = selectedChess.ToChessboardPoint();
                                 Cmd.To = NewPoint;
-                                UChessboard.Instance.DoCommand(Cmd);
+                                Gamer.Chessboard.DoCommand(Cmd);
                             }
                             else
                             {
@@ -108,9 +109,9 @@ public class ULocalPlayerController : UPlayerController {
         List<Point> Targets = selectedChess.GetAvailablePoints();
         for(int i=0;i<Targets.Count;i++)
         {
-            Marks.Add( GameObject.Instantiate(UChessboard.Instance.MarkPrefab, 
-                UChessboard.Instance.PosToWorld(UChessboard.Instance.ToChessboardPoint(Targets[i],selectedChess.campType)), 
-                UChessboard.Instance.MarkPrefab.transform.rotation) as GameObject);
+            Marks.Add( GameObject.Instantiate(Gamer.Chessboard.MarkPrefab, 
+                Gamer.Chessboard.PosToWorld(Gamer.Chessboard.ToChessboardPoint(Targets[i],selectedChess.campType)), 
+                Gamer.Chessboard.MarkPrefab.transform.rotation) as GameObject);
         }
     }
 

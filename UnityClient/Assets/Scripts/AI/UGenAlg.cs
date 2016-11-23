@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class UGenAlg
 {
-    List<UGenome> Genomes;
+    public List<UGenome> Genomes;
 
     public class ConfigData
     {
@@ -20,18 +20,27 @@ public class UGenAlg
         public float CrossoverRate = 0.7f;  
     }
 
-    ConfigData Config;
+    public ConfigData Config;
     //当前代数
-    int Generation;
+    public int Generation;
     //总适应性分数（轮盘选择需要）
-    double TotleFintnessScore;
+    public double TotleFintnessScore;
 
     public UGenAlg()
     {
         Generation = 0;
         TotleFintnessScore = 0.0f;
-        Config = new ConfigData();
+    }
+
+    public void Init(ConfigData cfg)
+    {
+        Config = cfg;
+
         Genomes = new List<UGenome>();
+        for (int i=0;i<Config.PopSize;i++)
+        {
+            Genomes.Add(new UGenome(Config.NumWeights));
+        }
     }
 
     /// <summary>
@@ -99,17 +108,16 @@ public class UGenAlg
     /// <summary>
     /// 更新适应性分数
     /// </summary>
-    void UpdateFitnessScores()
-    {
+    public delegate void UpdateFitnessScores();
 
-    }
+    public UpdateFitnessScores onUpdateFitnessScores;
 
     /// <summary>
     /// 迭代
     /// </summary>
     public void Epoch()
     {
-        UpdateFitnessScores();
+        onUpdateFitnessScores();
 
         List<UGenome> NewBabys = new List<UGenome>();
         while(NewBabys.Count<Genomes.Count)
@@ -134,5 +142,25 @@ public class UGenAlg
         Genomes = NewBabys;
 
         Generation++;
+    }
+
+
+    public void PutWeights(List<double[]> weights)
+    {
+        for (int i = 0; i < Genomes.Count; i++)
+        {
+            Genomes[i].Weights = weights[i];
+        }
+    }
+
+    public List<double[]> GetWeights()
+    {
+        List<double[]> weights = new List<double[]>();
+        for(int i=0;i<Genomes.Count;i++)
+        {
+            weights.Add(Genomes[i].Weights);
+        }
+
+        return weights;
     }
 }
