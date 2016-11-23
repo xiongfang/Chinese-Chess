@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
 public class UGenAlg
 {
-    public List<UGenome> Genomes;
+    public UGenome[] Genomes;
 
+    [System.Serializable]
     public class ConfigData
     {
         //群体大小
@@ -36,10 +38,10 @@ public class UGenAlg
     {
         Config = cfg;
 
-        Genomes = new List<UGenome>();
+        Genomes = new UGenome[cfg.PopSize];
         for (int i=0;i<Config.PopSize;i++)
         {
-            Genomes.Add(new UGenome(Config.NumWeights));
+            Genomes[i] = new UGenome(Config.NumWeights);
         }
     }
 
@@ -51,7 +53,7 @@ public class UGenAlg
     {
         double fSlice = Random.Range(0, (float)TotleFintnessScore);
         double fTotle = 0;
-        for(int i=0;i<Genomes.Count;i++)
+        for(int i=0;i<Genomes.Length;i++)
         {
             fTotle += Genomes[i].Fidness;
             if(fTotle>=fSlice)
@@ -120,7 +122,7 @@ public class UGenAlg
         onUpdateFitnessScores();
 
         List<UGenome> NewBabys = new List<UGenome>();
-        while(NewBabys.Count<Genomes.Count)
+        while(NewBabys.Count<Genomes.Length)
         {
             //选择两个父辈用来产生后代
             UGenome Dad = Selection();
@@ -139,7 +141,7 @@ public class UGenAlg
         }
 
         //设置为新代
-        Genomes = NewBabys;
+        Genomes = NewBabys.ToArray();
 
         Generation++;
     }
@@ -147,7 +149,7 @@ public class UGenAlg
 
     public void PutWeights(List<double[]> weights)
     {
-        for (int i = 0; i < Genomes.Count; i++)
+        for (int i = 0; i < Genomes.Length; i++)
         {
             Genomes[i].Weights = weights[i];
         }
@@ -156,7 +158,7 @@ public class UGenAlg
     public List<double[]> GetWeights()
     {
         List<double[]> weights = new List<double[]>();
-        for(int i=0;i<Genomes.Count;i++)
+        for(int i=0;i<Genomes.Length; i++)
         {
             weights.Add(Genomes[i].Weights);
         }

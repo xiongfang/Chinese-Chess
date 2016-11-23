@@ -71,7 +71,7 @@ public class UBotAIController : UController
     public UNeuronNet_Controller Net;
 
     //这个AI的适应性分数(开始都是10分)
-    public double Fitness = 2.0;   
+    public double Fitness = 10.0;   
 
 
     public UBotAIController()
@@ -79,8 +79,8 @@ public class UBotAIController : UController
         Net = new UNeuronNet_Controller();
         UNeuronNet.ConfigData Config = new UNeuronNet.ConfigData();
         Config.NumInputs = 32 * 3;  //棋子数*3
-        Config.NumHiddenLayer = 2; //2层隐藏层
-        Config.NumNeuronPerHiddenLayer = 20;    //每层20个神经元
+        Config.NumHiddenLayer = 2; //1层隐藏层
+        Config.NumNeuronPerHiddenLayer = 32;    //每层神经元
         Config.NumOutputs = 1;          //1个输出
         Net.Init(Config);
     }
@@ -137,11 +137,13 @@ public class UBotAIController : UController
                         changed += 100;
                         break;
                     default:
-                        changed -= 0.5;
+                        changed -= 0.2;
                         break;
                 }
 
                 Fitness += changed;
+
+                Fitness = Mathf.Max((float)Fitness, 0);
             }
         }
     }

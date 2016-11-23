@@ -88,8 +88,9 @@ public class Command
 public class UChessboard : MonoBehaviour
 {
     //public static UChessboard Instance;
-
+    [HideInInspector]
     public bool learn = false;
+
     //神经网络学习模式的情况下，不显示棋子
     public bool show
     {
@@ -232,7 +233,7 @@ public class UChessboard : MonoBehaviour
             BlackGamer.Attach(BotAI);
 
             //设置AI
-            BotAI.Net.PutWeights(new List<double>(UGameEngine.LoadWeightsFromFile_ForUse()[0]));
+            BotAI.Net.PutWeights(new List<double>(UGameEngine.LoadBestWeightsFromFileForUse()[0]));
         }
         else
         {
