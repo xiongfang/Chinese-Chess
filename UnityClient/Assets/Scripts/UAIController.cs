@@ -116,28 +116,28 @@ public class UBotAIController : UController
                 switch(Cmd.EatedHistory.chessType)
                 {
                     case EChessType.Bing:
-                        changed += 2;
+                        changed += 20;
                         break;
                     case EChessType.Ju:
-                        changed += 5;
+                        changed += 50;
                         break;
                     case EChessType.Ma:
-                        changed += 3;
+                        changed += 30;
                         break;
                     case EChessType.Pao:
-                        changed += 3;
+                        changed += 30;
                         break;
                     case EChessType.Shi:
-                        changed += 3;
+                        changed += 30;
                         break;
                     case EChessType.Xiang:
-                        changed += 3;
+                        changed += 30;
                         break;
                     case EChessType.Shuai:
                         changed += 100;
                         break;
                     default:
-                        changed -= 0.2;
+                        changed -= 1;
                         break;
                 }
 

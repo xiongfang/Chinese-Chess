@@ -18,6 +18,9 @@ public class UGameEngine : MonoBehaviour {
     //自动保存的时间(秒)
     public float auto_save_time = 30;
 
+    //每一代走的步数
+    public int step_count_per_gen = 5;
+
     //遗传算法
     UGenAlg Gen;
 
@@ -309,14 +312,17 @@ public class UGameEngine : MonoBehaviour {
                 //}
 
                 //下完一步(每边一步)
-                for (int i = 0; i < BoardList.Count; i++)
+                for(int step=0; step < step_count_per_gen; step++)
                 {
-                    BoardList[i].Step();
-                    BoardList[i].Step();
-
-                    if (BoardList[i].game_over)
+                    for (int i = 0; i < BoardList.Count; i++)
                     {
-                        BoardList[i].Restart();
+                        BoardList[i].Step();
+                        BoardList[i].Step();
+
+                        if (BoardList[i].game_over)
+                        {
+                            BoardList[i].Restart();
+                        }
                     }
                 }
 
