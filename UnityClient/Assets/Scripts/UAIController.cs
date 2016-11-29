@@ -71,11 +71,13 @@ public class UBotAIController : UController
     public UNeuronNet_Controller Net;
 
     //这个AI的适应性分数(开始都是10分)
-    public double Fitness = 10.0;   
+    public double Fitness;   
 
 
     public UBotAIController()
     {
+        Fitness = UGameEngine.start_fitness_score;
+
         Net = new UNeuronNet_Controller();
         UNeuronNet.ConfigData Config = new UNeuronNet.ConfigData();
         Config.NumInputs = 32 * 3;  //棋子数*3

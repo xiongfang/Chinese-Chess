@@ -21,6 +21,9 @@ public class UGameEngine : MonoBehaviour {
     //每一代走的步数
     public int step_count_per_gen = 5;
 
+    //初始适应性分数
+    public static readonly int start_fitness_score = 10;
+
     //遗传算法
     UGenAlg Gen;
 
@@ -248,6 +251,9 @@ public class UGameEngine : MonoBehaviour {
         return Gens;
     }
 
+    /// <summary>
+    /// 将AI控制器的适应性分数更新到基因里面
+    /// </summary>
     void UpdateFitnessScores()
     {
         double TotleFitness = 0;
@@ -270,6 +276,9 @@ public class UGameEngine : MonoBehaviour {
         Gen.TotleFintnessScore = TotleFitness;
     }
 
+    /// <summary>
+    /// 将基因的适应性分数更新到AI控制器里面
+    /// </summary>
     void PutFitnessScores()
     {
         for (int i = 0; i < Gen.Genomes.Length; i++)
@@ -281,6 +290,23 @@ public class UGameEngine : MonoBehaviour {
                 (BoardList[index].RedGamer.Controller as UBotAIController).Fitness = Gen.Genomes[i].Fidness;
             else
                 (BoardList[index].BlackGamer.Controller as UBotAIController).Fitness = Gen.Genomes[i].Fidness;
+        }
+    }
+
+    /// <summary>
+    /// 重置所有控制器的适应性分数
+    /// </summary>
+    void ResetFitnessScores()
+    {
+        for (int i = 0; i < Gen.Genomes.Length; i++)
+        {
+            int index = i / 2;
+            int red = i % 2;
+
+            if (red == 0)
+                (BoardList[index].RedGamer.Controller as UBotAIController).Fitness = start_fitness_score;
+            else
+                (BoardList[index].BlackGamer.Controller as UBotAIController).Fitness = start_fitness_score;
         }
     }
 
@@ -300,31 +326,40 @@ public class UGameEngine : MonoBehaviour {
 
                 _learn_timer += RealTime.deltaTime;
 
-                //迭代一次
-                Gen.Epoch();
-                PutWeightsToNet(Gen.GetWeights());
-
-                ////下完所有的棋子
-                //for (int i = 0; i < BoardList.Count; i++)
-                //{
-                //    while (!BoardList[i].game_over)
-                //        BoardList[i].Step();
-                //}
-
-                //下完一步(每边一步)
-                for(int step=0; step < step_count_per_gen; step++)
+                //下棋，计算适应性分数
                 {
-                    for (int i = 0; i < BoardList.Count; i++)
-                    {
-                        BoardList[i].Step();
-                        BoardList[i].Step();
+                    //重置适应性分数
+                    ResetFitnessScores();
 
-                        if (BoardList[i].game_over)
+                    ////下完所有的棋子
+                    //for (int i = 0; i < BoardList.Count; i++)
+                    //{
+                    //    while (!BoardList[i].game_over)
+                    //        BoardList[i].Step();
+                    //}
+
+                    //下完一步(每边一步)
+                    for (int step = 0; step < step_count_per_gen; step++)
+                    {
+                        for (int i = 0; i < BoardList.Count; i++)
                         {
-                            BoardList[i].Restart();
+                            BoardList[i].Step();
+                            BoardList[i].Step();
+
+                            if (BoardList[i].game_over)
+                            {
+                                BoardList[i].Restart();
+                            }
                         }
                     }
                 }
+
+                //迭代一次
+                Gen.Epoch();
+
+                //将基因更新给神经网络
+                PutWeightsToNet(Gen.GetWeights());
+
 
                 //刷新界面
                 LabelTun.text =string.Format("产生{0}代",Gen.Generation.ToString());
